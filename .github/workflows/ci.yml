@@ -41,11 +41,21 @@ jobs:
           brew services start mongodb-community@7.0
           sleep 5
 
+      - name: Install MongoDB (Windows)
+        if: matrix.os == 'windows-latest'
+        run: choco install mongodb.portable -y
+
+      - name: Create MongoDB data directory (Windows)
+        if: matrix.os == 'windows-latest'
+        run: New-Item -ItemType Directory -Force -Path "C:\data\db"
+
+      - name: Check MongoDB executable (Windows)
+        if: matrix.os == 'windows-latest'
+        run: dir "C:\ProgramData\chocolatey\lib\mongodb.portable\tools\mongodb-win32-x64-windows\bin"
+
       - name: Start MongoDB (Windows)
         if: matrix.os == 'windows-latest'
         run: |
-          choco install mongodb.portable
-          New-Item -ItemType Directory -Force -Path "C:\data\db"
           $mongodPath = "C:\ProgramData\chocolatey\lib\mongodb.portable\tools\mongodb-win32-x64-windows\bin\mongod.exe"
           Start-Process -FilePath $mongodPath -ArgumentList "--dbpath", "C:\data\db" -WindowStyle Hidden
           $retries = 30
