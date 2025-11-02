@@ -27,9 +27,7 @@ async function askInput(message, { defaultValue = "", validate = null } = {}) {
         message,
         default: defaultValue,
         validate:
-          validate ||
-          ((v) =>
-            v && String(v).trim().length ? true : "Value cannot be empty"),
+          validate || ((v) => (v && String(v).trim().length ? true : "Value cannot be empty")),
         filter: (v) => (typeof v === "string" ? v.trim() : v),
       },
     ]);

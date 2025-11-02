@@ -1,5 +1,9 @@
 # 🧩 MongoCopy
 
+[![CI](https://github.com/iamdhiraj69/Mongo-Copy/actions/workflows/ci.yml/badge.svg)](https://github.com/iamdhiraj69/Mongo-Copy/actions/workflows/ci.yml)
+[![npm version](https://badge.fury.io/js/mongocopy.svg)](https://www.npmjs.com/package/mongocopy)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 **MongoCopy** is a developer-friendly CLI tool to copy, export, import, or back up MongoDB collections and databases — safely, quickly, and locally — without complex MongoDB shell commands.
 
 ---
@@ -11,23 +15,39 @@
 - 🧰 **Dry-run mode** — Simulate copy before actually writing  
 - 💾 **JSON Export/Import** — Backup or restore collections as JSON files  
 - 🤖 **CI-ready** — Use `--yes` to skip confirmations in scripts  
-- 📊 **Progress feedback** — Beautiful spinners and progress logs  
+- 📊 **Progress feedback** — Real-time progress bars with document counts  
+- 🔄 **Incremental backups** — Copy only new/updated documents since last backup  
+- 🔑 **Index copying** — Automatically copy indexes from source to target  
+- ✅ **Schema validation** — Validate data compatibility before copying  
+- 🚀 **Performance optimized** — Streaming and bulk operations for large datasets  
 - 🧠 **Environment-based config** — Works out of the box via `.env`
 
 ---
 
 ## 📦 Installation
 
-### 1️⃣ Clone or Install Globally
+### Global Installation (Recommended)
+
+```bash
+npm install -g mongocopy
+```
+
+### Local Project Installation
+
+```bash
+npm install mongocopy
+```
+
+### Development Installation
 
 ```bash
 # Clone from GitHub
 git clone https://github.com/iamdhiraj69/Mongo-Copy.git
-cd Mongo-Copy
+cd MongoCopy
 npm install
 
-# or install globally (once published)
-npm i -g mongocopy
+# Link globally for testing
+npm link
 ```
 
 ### 2️⃣ Setup Environment
@@ -67,6 +87,27 @@ mongocopy --all --batch-size 500
 mongocopy --all --yes
 ```
 
+### Copy with Indexes
+```bash
+mongocopy --all --copy-indexes
+```
+
+### Incremental Backup (only new/updated documents)
+```bash
+# Copy documents updated in the last 7 days
+mongocopy --all --incremental --timestamp-field updatedAt --since 2024-01-01T00:00:00Z
+```
+
+### Validate Schema Before Copy
+```bash
+mongocopy --all --validate-schema
+```
+
+### Disable Progress Bars
+```bash
+mongocopy --all --no-progress
+```
+
 ## 💾 Backup / Restore JSON
 
 ### Export Collections to JSON
@@ -97,12 +138,89 @@ mongocopy --export-json --output-dir ./my_backup
 | LOG_PATH | Log file path (if enabled) | ./mongocopy.log |
 | BACKUP_DIR | JSON export/import folder | ./backup |
 
-## 🔧 Example
+## 🥇 CLI Examples
 
+### Basic Copy
 ```bash
 mongocopy --collections users,posts --batch-size 2000 --yes
 ```
 Copies only users and posts collections using batch size 2000 without confirmation.
+
+### Full Backup with Indexes
+```bash
+mongocopy --all --copy-indexes --export-json --output-dir ./full-backup
+```
+Exports all collections and their indexes to JSON files.
+
+### Incremental Sync
+```bash
+mongocopy --all --incremental --timestamp-field updatedAt --since 2024-01-01T00:00:00Z
+```
+Copies only documents updated since January 1, 2024.
+
+### Safe Production Copy
+```bash
+mongocopy --all --validate-schema --copy-indexes --batch-size 5000
+```
+Validates schema compatibility and copies with indexes using larger batches.
+
+## 💻 Programmatic API Usage
+
+Use MongoCopy in your Node.js applications:
+
+```javascript
+import { copyCollections } from 'mongocopy';
+
+// Copy specific collections
+const results = await copyCollections({
+  sourceUri: 'mongodb://localhost:27017',
+  targetUri: 'mongodb://localhost:27018',
+  dbName: 'myDatabase',
+  collections: ['users', 'posts'],
+  batchSize: 1000,
+  dryRun: false,
+  showProgress: true
+});
+
+console.log(results);
+// [
+//   { name: 'users', copied: 1500, total: 1500, status: 'copied' },
+//   { name: 'posts', copied: 3200, total: 3200, status: 'copied' }
+// ]
+
+// Export to JSON with indexes
+const exportResults = await copyCollections({
+  sourceUri: 'mongodb://localhost:27017',
+  targetUri: 'mongodb://localhost:27017',
+  dbName: 'myDatabase',
+  collections: ['users'],
+  exportJson: true,
+  outputDir: './backup',
+  copyIndexes: true
+});
+
+// Incremental backup (only documents updated since a date)
+const incrementalResults = await copyCollections({
+  sourceUri: 'mongodb://localhost:27017',
+  targetUri: 'mongodb://localhost:27018',
+  dbName: 'myDatabase',
+  collections: ['users'],
+  incremental: true,
+  timestampField: 'updatedAt',
+  since: new Date('2024-01-01'),
+  showProgress: true
+});
+
+// Copy with schema validation
+const validatedResults = await copyCollections({
+  sourceUri: 'mongodb://localhost:27017',
+  targetUri: 'mongodb://localhost:27018',
+  dbName: 'myDatabase',
+  collections: ['users'],
+  validateSchema: true,
+  copyIndexes: true
+});
+```
 
 ## 🧰 Development
 
@@ -137,10 +255,14 @@ mongocopy --help
 | ✅ | --collections | Copy specific collections |
 | ✅ | JSON export/import | Backup & restore to local JSON |
 | ✅ | --yes flag | Skip confirmation for CI |
-| ⚙️ | Progress bar | Visual feedback for long copies |
+| ✅ | Progress bars | Real-time visual feedback with document counts |
+| ✅ | Index copying | Copy indexes from source to target |
+| ✅ | Incremental backups | Copy only new/updated documents |
+| ✅ | Schema validation | Validate before copying |
+| ✅ | Performance optimizations | Streaming and bulk operations |
+| ✅ | Enhanced test coverage | Comprehensive test cases |
 | 🧠 | File logging | Save logs for debugging |
 | 🧩 | TypeScript version | Optional future version |
-| 🧪 | Jest test cases | Ensure reliability for contributors |
 
 ## 🧑‍💻 Author
 

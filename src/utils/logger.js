@@ -3,7 +3,6 @@ import path from "path";
 import { fileURLToPath } from "url";
 import chalk from "chalk";
 
-
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const DEFAULT_LOG_DIR = path.resolve(__dirname, "..", "..", "logs");
@@ -13,16 +12,14 @@ const DEBUG = (process.env.DEBUG || "false").toLowerCase() === "true";
 const LOG_TO_FILE =
   (process.env.LOG_TO_FILE || "false").toLowerCase() === "true" ||
   (process.env.LOG_PATH ? true : false);
-const LOG_PATH = process.env.LOG_PATH
-  ? path.resolve(process.env.LOG_PATH)
-  : DEFAULT_LOG_PATH;
+const LOG_PATH = process.env.LOG_PATH ? path.resolve(process.env.LOG_PATH) : DEFAULT_LOG_PATH;
 
 async function ensureLogDirectory(logFilePath) {
   try {
     const dir = path.dirname(logFilePath);
     await fs.promises.mkdir(dir, { recursive: true });
-  } catch (err) {
-
+  } catch {
+    // Ignore errors
   }
 }
 
@@ -33,8 +30,8 @@ async function writeLogToFile(level, message) {
     const time = new Date().toISOString();
     const line = `[${time}] [${level}] ${message}\n`;
     await fs.promises.appendFile(LOG_PATH, line, { encoding: "utf8" });
-  } catch (err) {
-
+  } catch {
+    // Ignore errors
   }
 }
 
@@ -66,38 +63,24 @@ const logger = {
 
   success: (msg) => {
     const text = safeMessage(msg);
-    console.log(
-      `${chalk.gray(`[${fmtTime()}]`)} ${chalk.green("✅")} ${chalk.green(
-        text
-      )}`
-    );
+    console.log(`${chalk.gray(`[${fmtTime()}]`)} ${chalk.green("✅")} ${chalk.green(text)}`);
     writeLogToFile("SUCCESS", text);
   },
 
   warn: (msg) => {
     const text = safeMessage(msg);
-    console.warn(
-      `${chalk.gray(`[${fmtTime()}]`)} ${chalk.yellow("⚠")} ${chalk.yellow(
-        text
-      )}`
-    );
+    console.warn(`${chalk.gray(`[${fmtTime()}]`)} ${chalk.yellow("⚠")} ${chalk.yellow(text)}`);
     writeLogToFile("WARN", text);
   },
 
   error: (msg) => {
     const text = safeMessage(msg);
     if (msg instanceof Error && msg.stack) {
-      console.error(
-        `${chalk.gray(`[${fmtTime()}]`)} ${chalk.red("❌")} ${chalk.red(
-          msg.message
-        )}`
-      );
+      console.error(`${chalk.gray(`[${fmtTime()}]`)} ${chalk.red("❌")} ${chalk.red(msg.message)}`);
       console.error(chalk.red(msg.stack));
       writeLogToFile("ERROR", `${msg.message}\n${msg.stack}`);
     } else {
-      console.error(
-        `${chalk.gray(`[${fmtTime()}]`)} ${chalk.red("❌")} ${chalk.red(text)}`
-      );
+      console.error(`${chalk.gray(`[${fmtTime()}]`)} ${chalk.red("❌")} ${chalk.red(text)}`);
       writeLogToFile("ERROR", text);
     }
   },
@@ -105,11 +88,7 @@ const logger = {
   debug: (msg) => {
     if (!DEBUG) return;
     const text = safeMessage(msg);
-    console.log(
-      `${chalk.gray(`[${fmtTime()}]`)} ${chalk.magenta("🐛")} ${chalk.magenta(
-        text
-      )}`
-    );
+    console.log(`${chalk.gray(`[${fmtTime()}]`)} ${chalk.magenta("🐛")} ${chalk.magenta(text)}`);
     writeLogToFile("DEBUG", text);
   },
 };

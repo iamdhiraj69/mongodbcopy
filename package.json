@@ -1,35 +1,70 @@
 {
   "name": "mongocopy",
-  "version": "1.0.0",
-  "description": "A developer-friendly MongoDB data copier that lets users easily clone, back up, or migrate collections or entire databases safely, quickly, and locally.",
-  "keywords": [
-    "Mongo-Copy",
-    "MongoDB"
-  ],
-  "homepage": "https://github.com/iamdhiraj69/Mongo-Copy#readme",
-  "bugs": {
-    "url": "https://github.com/iamdhiraj69/Mongo-Copy/issues"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/iamdhiraj69/Mongo-Copy.git"
-  },
-  "license": "MIT",
-  "author": "Dhiraj",
+  "version": "1.1.0",
+  "description": "A lightweight, production-ready CLI and Node.js utility for MongoDB data migration, backup, and cloning. Features include progress bars, incremental backups, index copying, schema validation, JSON export/import, and optimized batch processing for large datasets.",
   "type": "module",
-  "main": "src/index.js",
+  "main": "src/api.js",
   "bin": {
-    "mongocopy": "./src/index.js"
+    "mongocopy": "./src/cli/index.js"
   },
+  "files": [
+    "src/**/*",
+    "README.md",
+    "LICENSE",
+    ".env.example"
+  ],
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "keywords": [
+    "mongodb",
+    "mongo",
+    "database",
+    "migration",
+    "backup",
+    "copy",
+    "clone",
+    "cli",
+    "data-transfer",
+    "mongodb-tools",
+    "mongodb-backup",
+    "mongodb-copy",
+    "mongodb-migration",
+    "json-export",
+    "batch-processing"
+  ],
   "scripts": {
-    "start": "node src/index.js"
+    "start": "node ./src/cli/index.js",
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
+    "lint": "eslint src/**/*.js",
+    "format": "prettier --write \"src/**/*.js\"",
+    "format:check": "prettier --check \"src/**/*.js\"",
+    "prepublishOnly": "npm run format:check"
   },
   "dependencies": {
     "chalk": "^5.6.2",
+    "cli-progress": "^3.12.0",
     "commander": "^14.0.2",
     "dotenv": "^17.2.3",
     "inquirer": "^12.10.0",
     "mongodb": "^6.20.0",
     "ora": "^9.0.0"
+  },
+  "devDependencies": {
+    "eslint": "^9.39.0",
+    "glob": "^11.0.3",
+    "jest": "^30.2.0",
+    "prettier": "^3.6.2",
+    "rimraf": "^6.1.0"
+  },
+  "license": "MIT",
+  "author": "Dhiraj (https://github.com/iamdhiraj69)",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/iamdhiraj69/Mongo-Copy.git"
+  },
+  "homepage": "https://github.com/iamdhiraj69/Mongo-Copy#readme",
+  "bugs": {
+    "url": "https://github.com/iamdhiraj69/Mongo-Copy/issues"
   }
 }

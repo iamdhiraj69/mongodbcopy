@@ -32,3 +32,8 @@ Thumbs.db
 # Build / Dist
 dist/
 coverage/
+
+# Add to .gitignore
+PUBLISHING.md
+PRODUCTION_READY.md
+PRE_PUBLISH_CHECKLIST.md

@@ -3,7 +3,6 @@ import path from "path";
 import { fileURLToPath } from "url";
 import chalk from "chalk";
 
-
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const repoRoot = path.resolve(__dirname, "..", "..", "..");
@@ -11,20 +10,32 @@ dotenv.config({ path: path.resolve(repoRoot, ".env") });
 
 const REQUIRED = ["SOURCE_DB_URI", "TARGET_DB_URI", "DB_NAME"];
 
-const missing = REQUIRED.filter((k) => {
-  const v = process.env[k];
-  return !v || String(v).trim().length === 0;
-});
+function validateEnv() {
+  const missing = REQUIRED.filter((k) => {
+    const v = process.env[k];
+    return !v || String(v).trim().length === 0;
+  });
 
-if (missing.length > 0) {
-  console.error(
-    chalk.redBright(
-      `\n❌ Missing required environment variables: ${missing.join(
-        ", "
-      )}\n\nPlease copy \".env.example\" to \".env\" and fill these values.`
-    )
-  );
-  process.exit(1);
+  if (missing.length > 0) {
+    console.error(
+      chalk.redBright(
+        `\n❌ Missing required environment variables: ${missing.join(
+          ", "
+        )}\n\nPlease copy ".env.example" to ".env" and fill these values.`
+      )
+    );
+    process.exit(1);
+  }
+}
+
+// Only validate if not running help command
+const isHelpCommand =
+  process.argv.includes("--help") ||
+  process.argv.includes("-h") ||
+  process.argv.includes("--version") ||
+  process.argv.includes("-V");
+if (!isHelpCommand) {
+  validateEnv();
 }
 
 function parseIntegerEnv(key, fallback) {
@@ -41,9 +52,9 @@ function parseBooleanEnv(key, fallback) {
   return v === "1" || v === "true" || v === "yes";
 }
 
-const SOURCE_DB_URI = String(process.env.SOURCE_DB_URI).trim();
-const TARGET_DB_URI = String(process.env.TARGET_DB_URI).trim();
-const DB_NAME = String(process.env.DB_NAME).trim();
+const SOURCE_DB_URI = process.env.SOURCE_DB_URI ? String(process.env.SOURCE_DB_URI).trim() : "";
+const TARGET_DB_URI = process.env.TARGET_DB_URI ? String(process.env.TARGET_DB_URI).trim() : "";
+const DB_NAME = process.env.DB_NAME ? String(process.env.DB_NAME).trim() : "";
 
 const BATCH_SIZE = parseIntegerEnv("BATCH_SIZE", 1000);
 const COPY_INDEXES = parseBooleanEnv("COPY_INDEXES", true);
@@ -58,12 +69,5 @@ const env = {
   DEBUG,
 };
 
-export {
-  SOURCE_DB_URI,
-  TARGET_DB_URI,
-  DB_NAME,
-  BATCH_SIZE,
-  COPY_INDEXES,
-  DEBUG,
-};
+export { SOURCE_DB_URI, TARGET_DB_URI, DB_NAME, BATCH_SIZE, COPY_INDEXES, DEBUG };
 export default env;
