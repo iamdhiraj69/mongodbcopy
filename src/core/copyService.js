@@ -77,7 +77,7 @@ export async function copyCollections({
   await targetClient.connect();
   const sourceDb = sourceClient.db(dbName);
   const targetDb = targetClient.db(dbName);
-  
+
   // Initialize progress bar
   let progressBar = null;
   if (showProgress) {
@@ -85,10 +85,10 @@ export async function copyCollections({
       format: "Progress |{bar}| {percentage}% | {value}/{total} documents | {collection}",
       barCompleteChar: "\u2588",
       barIncompleteChar: "\u2591",
-      hideCursor: true
+      hideCursor: true,
     });
   }
-  
+
   try {
     const found = await sourceDb.listCollections().toArray();
     const allNames = found.map((c) => c.name);
@@ -98,19 +98,19 @@ export async function copyCollections({
     if (exportJson && !fs.existsSync(outputDir)) fs.mkdirSync(outputDir, { recursive: true });
     for (const name of collections) {
       const col = sourceDb.collection(name);
-      
+
       // Build query for incremental backup
       let query = {};
       if (incremental && since) {
         query[timestampField] = { $gte: since };
       }
-      
+
       const total = await col.countDocuments(query);
       if (total === 0) {
         summary.push({ name, copied: 0, total, status: incremental ? "no-new-docs" : "empty" });
         continue;
       }
-      
+
       // Schema validation
       if (validateSchema && !dryRun && !exportJson) {
         try {
@@ -118,22 +118,31 @@ export async function copyCollections({
           if (sampleDoc) {
             const destCol = targetDb.collection(name);
             // Try to validate by attempting a single insert in a test
-            const validationResult = await destCol.insertOne({ ...sampleDoc, _validationTest: true });
+            const validationResult = await destCol.insertOne({
+              ...sampleDoc,
+              _validationTest: true,
+            });
             if (validationResult.acknowledged) {
               await destCol.deleteOne({ _id: validationResult.insertedId });
             }
           }
         } catch (err) {
-          summary.push({ name, copied: 0, total, status: "schema-validation-failed", error: err.message });
+          summary.push({
+            name,
+            copied: 0,
+            total,
+            status: "schema-validation-failed",
+            error: err.message,
+          });
           continue;
         }
       }
-      
+
       if (dryRun) {
         summary.push({ name, copied: 0, total, status: "dry-run" });
         continue;
       }
-      
+
       // Initialize progress bar for this collection
       if (progressBar && total > 0) {
         progressBar.start(total, 0, { collection: name });
@@ -152,17 +161,17 @@ export async function copyCollections({
           continue;
         }
         const destCol = targetDb.collection(name);
-        
+
         // For incremental import, don't delete all, use upserts instead
         if (incremental) {
           for (let i = 0; i < json.length; i += batchSize) {
             const chunk = json.slice(i, i + batchSize);
-            const bulkOps = chunk.map(doc => ({
+            const bulkOps = chunk.map((doc) => ({
               replaceOne: {
                 filter: { _id: doc._id },
                 replacement: doc,
-                upsert: true
-              }
+                upsert: true,
+              },
             }));
             await destCol.bulkWrite(bulkOps, { ordered: false });
             if (progressBar) progressBar.update(i + chunk.length);
@@ -175,7 +184,7 @@ export async function copyCollections({
             if (progressBar) progressBar.update(i + chunk.length);
           }
         }
-        
+
         // Copy indexes if requested
         if (copyIndexes) {
           const indexFilePath = path.join(outputDir, `${name}_indexes.json`);
@@ -184,7 +193,7 @@ export async function copyCollections({
             await copyIndexesToTarget(destCol, indexes);
           }
         }
-        
+
         if (progressBar) progressBar.stop();
         summary.push({ name, copied: json.length, total: json.length, status: "imported-json" });
         continue;
@@ -201,37 +210,37 @@ export async function copyCollections({
           if (progressBar) progressBar.update(docCount);
         }
         fs.writeFileSync(filePath, JSON.stringify(allDocs, null, 2), "utf8");
-        
+
         // Export indexes if requested
         if (copyIndexes) {
           const indexes = await col.indexes();
           const indexFilePath = path.join(outputDir, `${name}_indexes.json`);
           fs.writeFileSync(indexFilePath, JSON.stringify(indexes, null, 2), "utf8");
         }
-        
+
         if (progressBar) progressBar.stop();
         summary.push({ name, copied: allDocs.length, total, status: "exported-json" });
         continue;
       }
       const destCol = targetDb.collection(name);
-      
+
       // For incremental, use upserts instead of delete all
       const cursor = col.find(query);
       let copied = 0;
-      
+
       if (incremental) {
         // Use streaming with bulkWrite for better performance
         const batch = [];
         while (await cursor.hasNext()) {
           batch.push(await cursor.next());
-          
+
           if (batch.length >= batchSize) {
-            const bulkOps = batch.map(doc => ({
+            const bulkOps = batch.map((doc) => ({
               replaceOne: {
                 filter: { _id: doc._id },
                 replacement: doc,
-                upsert: true
-              }
+                upsert: true,
+              },
             }));
             await destCol.bulkWrite(bulkOps, { ordered: false });
             copied += batch.length;
@@ -239,15 +248,15 @@ export async function copyCollections({
             batch.length = 0; // Clear batch
           }
         }
-        
+
         // Process remaining documents
         if (batch.length > 0) {
-          const bulkOps = batch.map(doc => ({
+          const bulkOps = batch.map((doc) => ({
             replaceOne: {
               filter: { _id: doc._id },
               replacement: doc,
-              upsert: true
-            }
+              upsert: true,
+            },
           }));
           await destCol.bulkWrite(bulkOps, { ordered: false });
           copied += batch.length;
@@ -256,7 +265,7 @@ export async function copyCollections({
       } else {
         // Full copy: delete all and insert
         await destCol.deleteMany({});
-        
+
         while (await cursor.hasNext()) {
           const batch = [];
           for (let i = 0; i < batchSize && (await cursor.hasNext()); i++) {
@@ -269,13 +278,13 @@ export async function copyCollections({
           }
         }
       }
-      
+
       // Copy indexes after data
       if (copyIndexes) {
         const indexes = await col.indexes();
         await copyIndexesToTarget(destCol, indexes);
       }
-      
+
       if (progressBar) progressBar.stop();
       summary.push({ name, copied, total, status: incremental ? "incremental-copied" : "copied" });
     }
@@ -294,15 +303,15 @@ export async function copyCollections({
  */
 async function copyIndexesToTarget(targetCol, indexes) {
   // Filter out the default _id index and create others
-  const indexesToCreate = indexes.filter(idx => idx.name !== "_id_");
-  
+  const indexesToCreate = indexes.filter((idx) => idx.name !== "_id_");
+
   for (const index of indexesToCreate) {
     try {
       const { key, name, ...options } = index;
       // Remove internal fields that shouldn't be passed to createIndex
       delete options.v;
       delete options.ns;
-      
+
       await targetCol.createIndex(key, { ...options, name });
     } catch (err) {
       // Index might already exist or have conflicts, log but continue
